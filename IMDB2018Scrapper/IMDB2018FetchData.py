@@ -19,9 +19,3 @@ print(response.text[:500])
 
 
 
-
-
-
-
-=======
->>>>>>> refs/heads/master
