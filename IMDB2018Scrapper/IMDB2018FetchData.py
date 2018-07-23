@@ -3,7 +3,7 @@
 import os
 import sys
 import requests
-import BeautifulSoup
+from bs4 import BeautifulSoup
 from requests import get
 
 
