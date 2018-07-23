@@ -63,6 +63,8 @@ movie_ratings = movie_ratings[['movie', 'year', 'imdb', 'metascore', 'votes']]
 movie_ratings.head(10)
 
 
+movie_ratings.to_csv('../Resources/Output/movie_ratings.csv')
+
 
 
 
