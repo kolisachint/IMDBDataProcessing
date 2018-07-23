@@ -19,6 +19,12 @@ print(type(movie_containers))
 print(len(movie_containers))
 
 
+# Lists to store the scraped data in
+names = []
+years = []
+imdb_ratings = []
+metascores = []
+votes = []
 
 # Extract data from individual movie container
 for container in movie_containers:
