@@ -4,12 +4,9 @@ import os
 import sys
 import requests
 import pandas as pd
-import snakebite
 from bs4 import BeautifulSoup
 from requests import get
-from snakebite.client import Client
 
-client = Client("hadoop-m.c.hadoopt", 8020, effective_user='kolisachint')
 
 url = 'http://www.imdb.com/search/title?release_date=2017&sort=num_votes,desc&page=1'
 response = get(url)
@@ -66,9 +63,8 @@ movie_ratings = movie_ratings[['movie', 'year', 'imdb', 'metascore', 'votes']]
 movie_ratings.head(10)
 
 
-movie_ratings.to_json('../Resources/Output/movie_ratings.json')
+movie_ratings.to_json('/home/kolisachint/IMDB/movie_ratings.json')
 
-client.copyToLocal(../Resources/Output/movie_ratings.json, /user/kolisachint/IMDB/movie_ratings.json, False)
 
 
 
