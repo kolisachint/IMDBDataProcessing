@@ -1,17 +1,44 @@
 
-DROP TABLE IMDBMovieData;
+CREATE SCHEMA IF NOT EXISTS IMDB;
 
-CREATE TABLE IMDBMovieData (
-json string
-);
+CREATE TABLE IF NOT EXISTS IMDB.MovieData_Stg (
+SrNo string,
+MovieNm string,
+Yr string,
+IMDBScr string,
+METAScr string,
+Votes string )
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '|'
+STORED AS TEXTFILE;
 
-LOAD DATA LOCAL INPATH  '/home/kolisachint/IMDB/movie_ratings.json' INTO TABLE IMDBMovieData;
 
-select get_json_object(IMDBMovieData.json, '$') from IMDBMovieData;
+CREATE EXTERNAL TABLE IF NOT EXISTS IMDB.MovieData (
+SrNo string,
+MovieNm string,
+IMDBScr string,
+METAScr string,
+Votes string )
+PARTITIONED BY (Yr string)
+CLUSTERED BY (MovieNm) INTO 4 BUCKETS
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '|'
+STORED AS TEXTFILE
+LOCATION '/home/kolisachint/IMDB/IMDBHiveDS';
 
-select get_json_object(IMDBMovieData.json, '$.movie') as movie, 
-       get_json_object(IMDBMovieData.json, '$.year') as yr,
-       get_json_object(IMDBMovieData.json, '$.imdb') as imdb,
-       get_json_object(IMDBMovieData.json, '$.metascore') as metascore,
-       get_json_object(IMDBMovieData.json, '$.votes') as votes
-from IMDBMovieData;
+SET hive.exec.dynamic.partition=true;
+SET hive.exec.dynamic.partition.mode=nonstrict;
+SET hive.exec.max.dynamic.partitions.pernode=1000;
+SET hive.enforce.bucketing=true;
+
+
+LOAD DATA LOCAL INPATH '/home/kolisachint/IMDB/movie_ratings.csv' OVERWRITE INTO TABLE IMDB.MovieData_Stg;
+
+
+INSERT OVERWRITE TABLE IMDB.MovieData PARTITION(Yr)
+SELECT SrNo,MovieNm,IMDBScr,METAScr,Votes,Yr FROM IMDB.MovieData_Stg;
+
+select * from IMDB.MovieData_Stg;
+
+select * from IMDB.MovieData;
+

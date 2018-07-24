@@ -63,7 +63,7 @@ movie_ratings = movie_ratings[['movie', 'year', 'imdb', 'metascore', 'votes']]
 movie_ratings.head(10)
 
 
-movie_ratings.to_json('/home/kolisachint/IMDB/movie_ratings.json')
+movie_ratings.to_csv('/home/kolisachint/IMDB/movie_ratings.csv','|')
 
 
 
