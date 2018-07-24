@@ -1,0 +1,17 @@
+
+DROP TABLE IMDBMovieData;
+
+CREATE TABLE IMDBMovieData (
+json string
+);
+
+LOAD DATA LOCAL INPATH  '/home/kolisachint/IMDB/movie_ratings.json' INTO TABLE IMDBMovieData;
+
+select get_json_object(IMDBMovieData.json, '$') from IMDBMovieData;
+
+select get_json_object(IMDBMovieData.json, '$.movie') as movie, 
+       get_json_object(IMDBMovieData.json, '$.year') as yr,
+       get_json_object(IMDBMovieData.json, '$.imdb') as imdb,
+       get_json_object(IMDBMovieData.json, '$.metascore') as metascore,
+       get_json_object(IMDBMovieData.json, '$.votes') as votes
+from IMDBMovieData;
