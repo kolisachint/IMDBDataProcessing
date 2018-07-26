@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Wed Jul 25 20:12:09 IST 2018:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.12.1.1 - (1704137): instance a816c00e-0164-d1e3-dd3d-000000138250 
+on database directory /home/kolisachint/PROJECTS/IMDBDataProcessing/DBStaging/metastore_db with class loader org.apache.spark.sql.hive.client.IsolatedClientLoader$$anon$1@4eb83e91 
+Loaded from file:/home/kolisachint/.local/lib/python2.7/site-packages/pyspark/jars/derby-10.12.1.1.jar
+java.vendor=Oracle Corporation
+java.runtime.version=1.8.0_171-8u171-b11-1~deb9u1-b11
+user.dir=/home/kolisachint/PROJECTS/IMDBDataProcessing/DBStaging
+os.name=Linux
+os.arch=amd64
+os.version=4.14.33+
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''

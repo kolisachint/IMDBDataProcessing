@@ -1,44 +1,23 @@
 
-CREATE SCHEMA IF NOT EXISTS IMDB;
-
-CREATE TABLE IF NOT EXISTS IMDB.MovieData_Stg (
-SrNo string,
-MovieNm string,
-Yr string,
-IMDBScr string,
-METAScr string,
-Votes string )
-ROW FORMAT DELIMITED
-FIELDS TERMINATED BY '|'
-STORED AS TEXTFILE;
-
-
-CREATE EXTERNAL TABLE IF NOT EXISTS IMDB.MovieData (
-SrNo string,
-MovieNm string,
-IMDBScr string,
-METAScr string,
-Votes string )
-PARTITIONED BY (Yr string)
-CLUSTERED BY (MovieNm) INTO 4 BUCKETS
-ROW FORMAT DELIMITED
-FIELDS TERMINATED BY '|'
-STORED AS TEXTFILE
-LOCATION '/home/kolisachint/IMDB/IMDBHiveDS';
-
 SET hive.exec.dynamic.partition=true;
 SET hive.exec.dynamic.partition.mode=nonstrict;
 SET hive.exec.max.dynamic.partitions.pernode=1000;
 SET hive.enforce.bucketing=true;
 
+LOAD DATA LOCAL INPATH '/home/kolisachint/IMDB/movie_ratings.csv' OVERWRITE INTO TABLE IMDBPreStg.MovieData;
 
-LOAD DATA LOCAL INPATH '/home/kolisachint/IMDB/movie_ratings.csv' OVERWRITE INTO TABLE IMDB.MovieData_Stg;
-
+INSERT OVERWRITE TABLE IMDBStg.MovieData PARTITION(Yr)
+SELECT  
+MovieNm,IMDBScr,METAScr,Votes,
+to_date(current_timestamp()),
+to_date(current_timestamp()),
+current_timestamp(),
+current_timestamp(),
+Yr  
+FROM IMDBPreStg.MovieData;
 
 INSERT OVERWRITE TABLE IMDB.MovieData PARTITION(Yr)
-SELECT SrNo,MovieNm,IMDBScr,METAScr,Votes,Yr FROM IMDB.MovieData_Stg;
+SELECT MovieNm,IMDBScr,METAScr,Votes,Eff_STRT_DTE,Eff_END_DTE,CREATE_TMSTMP,UPD_TMSTMP,YR
+FROM IMDBStg.MovieData;
 
-select * from IMDB.MovieData_Stg;
-
-select * from IMDB.MovieData;
-
+select * from IMDB.MovieData ;
