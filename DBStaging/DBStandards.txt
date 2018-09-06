@@ -78,3 +78,6 @@ SCD1key to check for "XY" location - Current As-On Snapshot
 SCD2key to check for "LX" location, purchased goods worth more than "15$" ->PIT snapshot
 
 <Work in progress Block End>
+
+
+
