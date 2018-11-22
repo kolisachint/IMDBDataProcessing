@@ -1,23 +1,19 @@
 
-Source Audit Columns -> Nature of the source data. 
-Nature of source data
-1. Full snapshot of source data
-2. CDC data of source for certain period. (day, week etc)
-3. Complete transactions as of date
-4. Transactions for period (day, week etc)
-Only required columns from below list to be included in staging table which holds raw data.
-	SrcSnpshtTmstmp
-	SrcExtrctFrmTmstmp
-	SrcExtrctToTmstmp
-	CreatedBySrc
-	UpdBySrc
+Source Audit Columns -> 
+	Nature of source data->
+		1. Full snapshot of source data
+		2. CDC data of source for certain period. (day, week etc)
+		3. Complete transactions as of date
+		4. Transactions for period (day, week etc)
+Only required columns from below list to be included in staging table which holds raw data.Propogate only if required.
+		SrcSnpshtTmstmp
+		SrcExtrctFrmTmstmp
+		SrcExtrctToTmstmp
+		CreatedBySrc
+		UpdBySrc
 DW Audit Columns -> When record is created/Updated in DW. -> Should Not used by any query/ data processing
-	DWCreateTmstmp
-	DWUpdTmstmp
-DW History columns ->
-	DWRowEffDte
-	DWRowExpDte
-	DWActvRowInd - Active/Expired <CURRENT/ACTIVE>
+		DWCreateTmstmp
+		DWUpdTmstmp
 DW Temporary Table Columns ->
 	DWCDCInd ->
 		New Row/Record-> I in All SCD implmentations
@@ -27,14 +23,33 @@ DW Temporary Table Columns ->
 		Deleted record at source side -> U/Ignore Processing based on approach
 				Check with the business/source if soft delete approach needs to be used
 				Or it should be ignored to keep record active.
+DW History columns ->
+	DWRowEffDte
+	DWRowExpDte
+	DWActvRowInd - Active/Expired <CURRENT/ACTIVE>
+DW Partitions for <History Maintainance> -> 
+	DWRowExpDte -> 3499-12-31 -> Indicates open records
+	DWRowExpMnth -> Combine <year and month> - It should be accurate. Derived column no one should use this column.
+	In Big data->
+		Keep only open records for SCD implementation.
+		Have view which unifies open records and historical records
+		While processing implement below approach
+		Open records -> Delete all data and insert all data in batch. [Use rm -skipTrash + INSERT OVERWRITE]
+		Historical Records -> Insert overwrite all historical data in batch [INSERT OVERWRITE]
+				Have partitions based on DWRowExpMnth.
+	In Teradata->Apply the same thing as above in teradata
+		   PARTITION BY (
+			  CASE_N (DWRowExpDte=DATE'3499-12-31',DWRowExpDte<>DATE'3499-12-31' , NO CASE, UNKNOWN),
+		>>>	  RANGE_N(DWRowExpDte    BETWEEN DATE '1900-01-01' 
+                                     AND     DATE '3499-12-31' 
+                                     EACH INTERVAL '3' MONTH, NO RANGE, UNKNOWN));  <<<  
+									<<<< Is this really required?
+									<<<< Means degrading performance just to have archiving and purging solution on table?
 DW Purging and Archiving Columns -> Should Not used by any query/ data processing [Hive archive purge partitions]
 	Month -> DWRowExpMnth
 	Year  -> DWRowExpYear
-DW Partitions for <History Maintainance> -> 
-	DWRowExpDte -> 3499-12-31 -> Indicates open records
-	DWRowEffDte - For PIT - How to include it in partition ?
-	----DWRowExpMnth -> If Integer combine <year and month> - It should be mathematical - 201813->2018
-	----DWRowExpYear
+	
+
 
 	
 PseudoCode
@@ -78,6 +93,18 @@ SCD1key to check for "XY" location - Current As-On Snapshot
 SCD2key to check for "LX" location, purchased goods worth more than "15$" ->PIT snapshot
 
 <Work in progress Block End>
+
+
+ID_SK	ID_NK	NAME	Spend	Date	
+00001	0000A	0000A0	1	1-Jan	
+00002	0000A	0000A1	2	3-Jan	
+_____	0000A	0000A2	3	2-Jan	<-- Late arriving History? Late Arriving fact? -> Correct Dimension  first,  
+										then Insert Fact with eff_sta_dt and eff_end_dt for correct dimension lookup
+00003	0000B	0000B0	4	1-Jan	
+00004	0000C	0000C0	_	2-Jan	<-- Late arriving fact ( Use eff_Sta_dt and eff_end_dt for correct dimension lookup)
+00005	0000D	______	6	2-Jan	<-- Late arriving dimension (insert DIM record with other attributes as null 
+										and then update attributes as SCD1)
+
 
 
 
