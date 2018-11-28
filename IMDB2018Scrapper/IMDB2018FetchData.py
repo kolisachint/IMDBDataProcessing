@@ -6,7 +6,6 @@ import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 from requests import get
-from subprocess import call
 
 
 url = 'http://www.imdb.com/search/title?release_date=2017&sort=num_votes,desc&page=1'
@@ -65,8 +64,6 @@ movie_ratings.head(10)
 
 
 movie_ratings.to_csv('/home/kolisachint/IMDB/movie_ratings.csv','|')
-
-call(["scp", "/home/kolisachint/IMDB/movie_ratings.csv","hadoop-m:/home/kolisachint/IMDB/movie_ratings.csv"])
 
 
 
