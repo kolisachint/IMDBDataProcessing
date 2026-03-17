@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS IMDBPreStg.MovieData;
 DROP TABLE IF EXISTS IMDBStg.MovieData;
 DROP TABLE IF EXISTS IMDB.MovieData;
 
+-- Pre-stage: external table pointing at raw CSV drop zone
 CREATE EXTERNAL TABLE IF NOT EXISTS IMDBPreStg.MovieData (
 SrNo int COMMENT 'Serial Number',
 MovieNm string COMMENT 'Movie Name',
@@ -27,38 +28,40 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT
     'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-    'hdfs://hadoop-m:8020/home/kolisachint/IMDB/IMDBPreStg.MovieData'
+    'hdfs://hadoop-m:8020/user/imdb/IMDBPreStg.MovieData'
 TBLPROPERTIES (
     'serialization.null.format' = '',
     'skip.header.line.count' = '1');
 
-CREATE EXTERNAL TABLE IF NOT EXISTS IMDBStg.MovieData (
+-- Stage: managed table; dropping it does not risk raw source data
+CREATE TABLE IF NOT EXISTS IMDBStg.MovieData (
 MovieNm string COMMENT 'Movie Name',
 IMDBScr decimal(2,1) COMMENT 'IMDB Score',
 METAScr int COMMENT 'Meta Score',
 Votes int COMMENT 'Votes',
 Eff_STRT_DTE date COMMENT 'Effective Start Date',
-Eff_END_DTE date COMMENT 'Effefctive End Date',
+Eff_END_DTE date COMMENT 'Effective End Date',
 CREATE_TMSTMP timestamp COMMENT 'Create Timestamp',
-UPD_TMSTMP timestamp COMMENT 'Update timestamp'
+UPD_TMSTMP timestamp COMMENT 'Update Timestamp'
 )
 COMMENT 'IMDB Movie Data Stage Table - Cleaned and Ready to Load Data'
 PARTITIONED BY ( Yr string)
 CLUSTERED BY (MovieNm) INTO 4 BUCKETS
-LOCATION 'hdfs://hadoop-m:8020/home/kolisachint/IMDB/IMDBStg.MovieData';
+LOCATION 'hdfs://hadoop-m:8020/user/imdb/IMDBStg.MovieData';
 
 
-CREATE EXTERNAL TABLE IF NOT EXISTS IMDB.MovieData (
+-- Target: managed table for final queried data
+CREATE TABLE IF NOT EXISTS IMDB.MovieData (
 MovieNm string COMMENT 'Movie Name',
 IMDBScr decimal(2,1) COMMENT 'IMDB Score',
 METAScr int COMMENT 'Meta Score',
 Votes int COMMENT 'Votes',
 Eff_STRT_DTE date COMMENT 'Effective Start Date',
-Eff_END_DTE date COMMENT 'Effefctive End Date',
+Eff_END_DTE date COMMENT 'Effective End Date',
 CREATE_TMSTMP timestamp COMMENT 'Create Timestamp',
-UPD_TMSTMP timestamp COMMENT 'Update timestamp'
+UPD_TMSTMP timestamp COMMENT 'Update Timestamp'
 )
 COMMENT 'IMDB Movie Data Target Table - Holds Movie Related Data'
 PARTITIONED BY ( Yr string)
 CLUSTERED BY (MovieNm) INTO 4 BUCKETS
-LOCATION 'hdfs://hadoop-m:8020/home/kolisachint/IMDB/IMDB.MovieData';
+LOCATION 'hdfs://hadoop-m:8020/user/imdb/IMDB.MovieData';

@@ -4,20 +4,30 @@ SET hive.exec.dynamic.partition.mode=nonstrict;
 SET hive.exec.max.dynamic.partitions.pernode=1000;
 SET hive.enforce.bucketing=true;
 
+-- Load raw CSV into pre-stage (path should match the LOCATION in TblMovieDDL.hive)
 LOAD DATA LOCAL INPATH '/home/kolisachint/IMDB/movie_ratings.csv' OVERWRITE INTO TABLE IMDBPreStg.MovieData;
 
+-- Transform into stage; Eff_END_DTE uses a far-future sentinel for active/current records
 INSERT OVERWRITE TABLE IMDBStg.MovieData PARTITION(Yr)
-SELECT  
-MovieNm,IMDBScr,METAScr,Votes,
-to_date(current_timestamp()),
-to_date(current_timestamp()),
-current_timestamp(),
-current_timestamp(),
-Yr  
+SELECT
+    MovieNm,
+    IMDBScr,
+    METAScr,
+    Votes,
+    to_date(current_timestamp())    AS Eff_STRT_DTE,
+    CAST('9999-12-31' AS date)      AS Eff_END_DTE,
+    current_timestamp()             AS CREATE_TMSTMP,
+    current_timestamp()             AS UPD_TMSTMP,
+    Yr
 FROM IMDBPreStg.MovieData;
 
+-- Promote from stage to final target table
 INSERT OVERWRITE TABLE IMDB.MovieData PARTITION(Yr)
-SELECT MovieNm,IMDBScr,METAScr,Votes,Eff_STRT_DTE,Eff_END_DTE,CREATE_TMSTMP,UPD_TMSTMP,YR
+SELECT
+    MovieNm, IMDBScr, METAScr, Votes,
+    Eff_STRT_DTE, Eff_END_DTE,
+    CREATE_TMSTMP, UPD_TMSTMP,
+    Yr
 FROM IMDBStg.MovieData;
 
-select * from IMDB.MovieData ;
+SELECT * FROM IMDB.MovieData;

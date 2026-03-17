@@ -1,81 +1,51 @@
-# IMPORTING REQUIRED LIBRARY
-
 import os
-import sys
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
-from requests import get
+
+OUTPUT_PATH = os.environ.get('IMDB_OUTPUT_PATH', '/home/kolisachint/IMDB/movie_ratings.csv')
+IMDB_URL = 'https://www.imdb.com/search/title?release_date=2017&sort=num_votes,desc&page=1'
 
 
-url = 'http://www.imdb.com/search/title?release_date=2017&sort=num_votes,desc&page=1'
-response = get(url)
+def fetch_movie_data(url):
+    """Fetch and parse movie data from IMDB search page."""
+    headers = {'Accept-Language': 'en-US,en;q=0.5'}
+    response = requests.get(url, headers=headers, timeout=10)
+    response.raise_for_status()
 
-html_soup = BeautifulSoup(response.text, 'html.parser')
-type(html_soup)
+    html_soup = BeautifulSoup(response.text, 'html.parser')
+    movie_containers = html_soup.find_all('div', class_='lister-item mode-advanced')
+    print(f"Found {len(movie_containers)} movie containers")
 
-movie_containers = html_soup.find_all('div', class_ = 'lister-item mode-advanced')
-print(type(movie_containers))
-print(len(movie_containers))
+    names, years, imdb_ratings, metascores, votes = [], [], [], [], []
 
+    for container in movie_containers:
+        # Only process movies that have a MetaScore
+        if container.find('div', class_='ratings-metascore') is None:
+            continue
 
-# Lists to store the scraped data in
-names = []
-years = []
-imdb_ratings = []
-metascores = []
-votes = []
+        names.append(container.h3.a.text)
+        years.append(container.h3.find('span', class_='lister-item-year').text)
+        imdb_ratings.append(float(container.strong.text))
+        metascores.append(int(container.find('span', class_='metascore').text.strip()))
+        votes.append(int(container.find('span', attrs={'name': 'nv'})['data-value']))
 
-# Extract data from individual movie container
-for container in movie_containers:
-
-    # If the movie has Metascore, then extract:
-    if container.find('div', class_ = 'ratings-metascore') is not None:
-
-        # The name
-        name = container.h3.a.text
-        names.append(name)
-
-        # The year
-        year = container.h3.find('span', class_ = 'lister-item-year').text
-        years.append(year)
-
-        # The IMDB rating
-        imdb = float(container.strong.text)
-        imdb_ratings.append(imdb)
-
-        # The Metascore
-        m_score = container.find('span', class_ = 'metascore').text
-        metascores.append(int(m_score))
-
-        # The number of votes
-        vote = container.find('span', attrs = {'name':'nv'})['data-value']
-        votes.append(int(vote))
+    return pd.DataFrame({
+        'movie': names,
+        'year': years,
+        'imdb': imdb_ratings,
+        'metascore': metascores,
+        'votes': votes,
+    })
 
 
-movie_ratings = pd.DataFrame({'movie': names,
-                       'year': years,
-                       'imdb': imdb_ratings,
-                       'metascore': metascores,
-                       'votes': votes})
-
-movie_ratings = movie_ratings[['movie', 'year', 'imdb', 'metascore', 'votes']]
-movie_ratings.head(10)
+def main():
+    movie_ratings = fetch_movie_data(IMDB_URL)
+    print(movie_ratings.head(10))
+    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+    movie_ratings.to_csv(OUTPUT_PATH, sep='|', index=False)
+    print(f"Saved {len(movie_ratings)} records to {OUTPUT_PATH}")
 
 
-movie_ratings.to_csv('/home/kolisachint/IMDB/movie_ratings.csv','|')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+if __name__ == '__main__':
+    main()
